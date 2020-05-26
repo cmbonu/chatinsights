@@ -4,11 +4,12 @@ import App from "./App.vue";
 import store from "./store";
 import VueRouter from 'vue-router'
 import SummaryBar from "./components/GroupSummary.vue";
-import UploadForm from "./components/UploadForm.vue"
+import UploadForm from "./components/UploadForm.vue";
+import LoginComponent from "./components/LoginComponent.vue";
 import './../node_modules/bulma/css/bulma.css';
 import './../node_modules/chart.js';
-import './../node_modules/@fortawesome/fontawesome-free/css/all.css'
-import './../node_modules/axios/dist/axios.min.js'
+import './../node_modules/@fortawesome/fontawesome-free/css/all.css';
+import './../node_modules/axios/dist/axios.min.js';
 
 Vue.config.productionTip = false;
 Vue.use(VueRouter)
@@ -17,8 +18,11 @@ Vue.use(VueRouter)
 //const ChatUploadForm = {template : UploadForm}
 
 const routes = [
-  {path : '/', component : SummaryBar},
-  {path : '/upload', component : UploadForm}
+  {path : '/', component : LoginComponent},
+  {path : '/login/:access_token', component : LoginComponent},
+  {path : '/login', component : LoginComponent},
+  {path : '/upload', component : UploadForm},
+  {path : '/summary', component : SummaryBar},
 ]
 
 const router = new VueRouter({

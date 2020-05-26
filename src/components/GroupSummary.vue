@@ -1,5 +1,6 @@
 <template>
   <div>
+    <top-nav />
     <div class="tile sectiongap">
       <div class="has-text-centered tile is-child box">
         <p class="heading">All Messages</p>
@@ -51,8 +52,13 @@
 
 <script>
 import Chart from "chart.js";
+import TopNav from "./TopNav.vue";
+import axios from "axios";
 export default {
   name: "GroupSummary",
+  components: {
+    TopNav
+  },
   data: function() {
     return {
       cdata: [12, 19, 3, 5, 2, 3, 16],
@@ -68,17 +74,38 @@ export default {
       average_mau: 45.8
     };
   },
-  created: function() {
-    this.total_chats = 12000;
-    this.has_link = 10;
-    this.average_mau = 33.7;
-  },
   watch: {
     cdata: function(new_data) {
       this.createChart("myChart", new_data);
     }
   },
   methods: {
+    checkToken() {
+      var localToken = this.$store.state.authToken;
+      var vm = this;
+      axios({
+        method: "post",
+        url: "http://localhost:5000/auth/v0.1/check-token",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          //handle success
+          console.log(response.status);
+        })
+        .catch(function(response) {
+          //handle error
+          console.log(response);
+          vm.$router.push({ path: "/login/new" });
+        });
+    },
+    fetchData() {
+      this.total_chats = 12000;
+      this.has_link = 10;
+      this.average_mau = 33.7;
+    },
     createChart(chartId, chartData) {
       const ctx = document.getElementById(chartId).getContext("2d");
       new Chart(ctx, {
@@ -125,7 +152,11 @@ export default {
       });
     }
   },
+  created: function() {
+    this.checkToken();
+  },
   mounted: function() {
+    this.fetchData();
     this.createChart("myChart", this.cdata);
   }
 };

@@ -1,19 +1,13 @@
 <template>
   <div>
-    <div id="success_notif" class="notification is-primary is-light" hidden>
-      <button class="delete" v-on:click="exitSuccessNotification"></button>
-      Request Sucessfully Submitted
-    </div>
-    <div id="fail_notif" class="notification is-danger is-light" hidden>
-      <button class="delete" v-on:click="exitFailNotification"></button>
-      Request Failed
-    </div>
+    <top-nav />
+    <NotificationBanner/>
     <div class="columns is-centered" style="padding-top:30px;">
-      <div class="column is-6" style="text-align: left;">
+      <div class="column is-4" style="text-align: left;">
         <div class="tile is-vertical">
-          <p class="title">Submit Chat File</p>
+          <p class="title has-text-white">Upload File</p>
           <div class="field">
-            <label class="label">Email</label>
+            <label class="label has-text-white">Email</label>
             <div class="control has-icons-left has-icons-right">
               <input
                 class="input is-danger"
@@ -35,7 +29,7 @@
           <div class="columns">
             <div class="column is-5">
               <div class="field">
-                <label class="label">File Title</label>
+                <label class="label has-text-white">File Title</label>
                 <div class="control">
                   <input
                     class="input"
@@ -49,7 +43,7 @@
             </div>
             <div class="column is-7">
               <div class="field">
-                <label class="label">File for Upload</label>
+                <label class="label has-text-white">File for Upload</label>
                 <div class="file has-name is-fullwidth">
                   <label class="file-label">
                     <input
@@ -70,22 +64,9 @@
               </div>
             </div>
           </div>
-          <div class="field">
-            <div class="control">
-              <label class="checkbox">
-                <input type="checkbox" name="tandc" />
-                I agree to the
-                <a href="#">terms and conditions</a>
-              </label>
-            </div>
-          </div>
-
           <div class="field is-grouped">
             <div class="control">
               <button v-on:click="processForm" class="button is-link">Submit</button>
-            </div>
-            <div class="control">
-              <button class="button is-link is-light">Cancel</button>
             </div>
           </div>
         </div>
@@ -96,8 +77,14 @@
 
 <script>
 import axios from "axios";
+import TopNav from "./TopNav.vue";
+import NotificationBanner from './Notification';
 export default {
   name: "UploadForm",
+  components: {
+    TopNav,
+    NotificationBanner
+  },
   data: function() {
     return {
       upload_chat_file: [],
@@ -107,14 +94,6 @@ export default {
     };
   },
   methods: {
-    exitSuccessNotification: function(event) {
-      console.log(event);
-      document.getElementById("success_notif").style.display = "none";
-    },
-    exitFailNotification: function(event) {
-      console.log(event);
-      document.getElementById("fail_notif").style.display = "none";
-    },
     updatename: function(event) {
       if (event.target.files.length > 0) {
         //const fileName = document.querySelector(".file-name");
@@ -132,7 +111,7 @@ export default {
       var vm = this;
       axios({
         method: "post",
-        url: "http://localhost:5000/upload_chat_export",
+        url: "http://localhost:5000/file-submission/submit-form",
         data: formData,
         headers: { "Content-Type": "multipart/form-data" }
       })
@@ -140,7 +119,6 @@ export default {
           //handle success
           document.getElementById("success_notif").style.display = "block";
           console.log(response);
-
           vm.file_title = "";
           vm.email_address = "";
           vm.file_name = "";
