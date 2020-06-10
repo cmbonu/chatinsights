@@ -1,7 +1,50 @@
 <template>
   <div>
     <top-nav />
-    <div class="tile sectiongap">
+    <div class="tile">
+      <div class="has-text-centered tile is-child box is-centered">
+        <!--p class="heading">Filters</p-->
+        <div class="columns is-centered">
+          <div class="column is-2 has-text-left">
+            <div class="field">
+              <label class="label has-text-white is-small">From</label>
+              <div class="control">
+                <input
+                  class="input is-small"
+                  type="date"
+                  placeholder="Text input"
+                  name="start_date"
+                  v-model="start_date"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="column is-2 has-text-left">
+            <div class="field">
+              <label class="label has-text-white is-small">To</label>
+              <div class="control">
+                <input
+                  class="input is-small"
+                  type="date"
+                  placeholder="Text input"
+                  name="end_date"
+                  v-model="end_date"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="column is-1 has-text-left">
+            <div class="field">
+              <label class="label is-small" style="color: #303053">.</label>
+              <div class="control">
+                <button v-on:click="fetchData" class="button is-link is-small">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tile">
       <div class="has-text-centered tile is-child box">
         <p class="heading">All Messages</p>
         <p style="color: white" class="title">{{ total_chats }}</p>
@@ -19,7 +62,7 @@
         <p class="title">{{unique_contributors}}</p>
       </div>
     </div>
-    <div class="tile sectiongap">
+    <div class="tile">
       <div class="has-text-centered tile is-child box">
         <p class="heading">Joined</p>
         <p style="color: white" class="title">{{ new_members }}</p>
@@ -37,13 +80,44 @@
         <p class="title">{{security_code}}</p>
       </div>
     </div>
-    <div class="tile sectiongap">
-      <div class="has-text-centered tile is-child box">
-        <canvas id="myChart" width="100" height="50"></canvas>
+    <div class="tile">
+      <div class="has-text-centered tile is-child box" style=" height:50vh; padding:10px;">
+        <canvas id="myChart"></canvas>
+        <!--width="100" style="min-height:25px"-->
       </div>
+      <div class="has-text-centered tile is-child box" style=" height:50vh; padding:10px;">
+        <div style="height:23vh;">
+          <canvas id="monthly_total"></canvas>
+        </div>
+        <div style=" height:23vh;">
+          <canvas id="monthly_unique"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="tile is-hidden">
       <div class="has-text-centered tile is-child box">
-        <p class="heading">Left</p>
-        <p class="title">{{exits}}</p>
+        <p class="heading">TIMELINE</p>
+        <div id="chat_timeline"></div>
+      </div>
+    </div>
+    <div class="tile is-hidden-mobile">
+      <div class="tile is-child box">
+        <p style="color: white" class="has-text-centered heading">Conversations Timeline</p>
+        <div style="color: white" class="has-text-centered">
+          <p class="is-mobile" style="color: white; font-size: 10px;">
+            For the best experience,
+            view
+            on a fullsize screen
+          </p>
+          <iframe
+            id="igraph"
+            scrolling="yes"
+            seamless="seamless"
+            :src="chartURL"
+            height="550"
+            width="100%"
+          ></iframe>
+        </div>
       </div>
     </div>
   </div>
@@ -54,6 +128,7 @@
 import Chart from "chart.js";
 import TopNav from "./TopNav.vue";
 import axios from "axios";
+import tinycolor from "tinycolor2";
 export default {
   name: "GroupSummary",
   components: {
@@ -61,31 +136,53 @@ export default {
   },
   data: function() {
     return {
-      cdata: [12, 19, 3, 5, 2, 3, 16],
+      cdata: [],
+      monthly_total_data: {},
       ctx: 0,
-      total_chats: 15255,
-      has_media: 1017,
-      has_link: 1246,
-      unique_contributors: 67,
-      exits: 9,
-      security_code: 99,
-      icon_change: 9,
-      new_members: 32,
-      average_mau: 45.8
+      total_chats: 0,
+      has_media: 0,
+      has_link: 0,
+      unique_contributors: 0,
+      exits: 0,
+      security_code: 0,
+      icon_change: 0,
+      new_members: 0,
+      average_mau: 0,
+      chartURL: "",
+      upload_chat_id: -1,
+      start_date: "",
+      end_date: "",
+      user_activity_chart: undefined,
+      user_monthly_activity_chart: undefined,
+      user_monthly_unique_chart: undefined
     };
   },
+
   watch: {
     cdata: function(new_data) {
       this.createChart("myChart", new_data);
+    },
+    monthly_total_data: function(new_data) {
+      this.monthlyActivityCharts(new_data);
+    },
+    upload_chat_id: function(new_upload_id) {
+      this.fetchDefaultDataForUploadID(new_upload_id);
+      //this.fetchData();
+    },
+    $route(to, from) {
+      // react to route changes...
+      this.upload_chat_id = to.params.upload_id;
+      console.log(from.params.upload_id);
     }
   },
+
   methods: {
     checkToken() {
       var localToken = this.$store.state.authToken;
       var vm = this;
       axios({
         method: "post",
-        url: "http://localhost:5000/auth/v0.1/check-token",
+        url: vm.$store.state.backend_server + "/auth/v0.1/check-token",
         headers: {
           "Content-Type": "application/json",
           Authorization: localToken
@@ -93,7 +190,57 @@ export default {
       })
         .then(function(response) {
           //handle success
-          console.log(response.status);
+          console.log("Summary Token OK: " + response.status);
+        })
+        .catch(function(response) {
+          //handle error
+          console.log(response);
+          vm.$router.push({ path: "/login/new" });
+        });
+    },
+    setupDefaultUpload() {
+      var localToken = this.$store.state.authToken;
+      var vm = this;
+      axios({
+        method: "get",
+        url: vm.$store.state.backend_server + "/data-service/v0.1/init",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          //handle success
+          var init_data = response.data;
+          vm.upload_chat_id = init_data[0]["upload_id"];
+        })
+        .catch(function(response) {
+          //handle error
+          console.log(response);
+          vm.$router.push({ path: "/login/new" });
+        });
+    },
+    fetchDefaultDataForUploadID(upload_chat_id) {
+      var localToken = this.$store.state.authToken;
+      var vm = this;
+      axios({
+        method: "get",
+        url:
+          vm.$store.state.backend_server +
+          "/data-service/v0.1/chats/" +
+          upload_chat_id +
+          "/get_default_date",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          //handle success
+          var date_data = response.data[0];
+          vm.start_date = date_data["min_date"];
+          vm.end_date = date_data["max_date"];
+          vm.fetchData();
         })
         .catch(function(response) {
           //handle error
@@ -102,48 +249,313 @@ export default {
         });
     },
     fetchData() {
-      this.total_chats = 12000;
-      this.has_link = 10;
-      this.average_mau = 33.7;
+      var localToken = this.$store.state.authToken;
+      var vm = this;
+      //Fetch Summary Data
+      axios({
+        method: "get",
+        url:
+          vm.$store.state.backend_server +
+          "/data-service/v0.1/chats/" +
+          vm.upload_chat_id +
+          "/summary", //?start_date=1-jul-2019&end_date=31-dec-2019
+        params: {
+          start_date: vm.start_date,
+          end_date: vm.end_date
+        },
+        headers: {
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          var summary = response.data[0];
+          vm.total_chats = summary["all_messages"];
+          vm.has_link = summary["has_url"];
+          vm.average_mau = summary["monthly_average_users"];
+          vm.has_media = summary["has_media"];
+          vm.unique_contributors = summary["unique_users"];
+          vm.exits = summary["left_group"];
+          vm.security_code = summary["changed_code"];
+          vm.new_members = summary["was_added"];
+        })
+        .catch(function(response) {
+          console.log(response.status);
+        });
+
+      //Fetch User Activity Data
+      axios({
+        method: "get",
+        url:
+          vm.$store.state.backend_server +
+          "/data-service/v0.1/chats/" +
+          vm.upload_chat_id +
+          "/members/chat_counts",
+        params: {
+          start_date: vm.start_date,
+          end_date: vm.end_date
+        },
+        headers: {
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          vm.cdata = response.data;
+          //console.log(vm.cdata.member_phone);
+        })
+        .catch(function(response) {
+          console.log(response.status);
+        });
+
+      //Fetch Monthly Activity Data
+      axios({
+        method: "get",
+        url:
+          vm.$store.state.backend_server +
+          "/data-service/v0.1/chats/" +
+          vm.upload_chat_id +
+          "/monthly_group_activity",
+        params: {
+          start_date: vm.start_date,
+          end_date: vm.end_date
+        },
+        headers: {
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          vm.monthly_total_data = response.data;
+          //console.log(vm.cdata.member_phone);
+        })
+        .catch(function(response) {
+          console.log(response.status);
+        });
+
+      //Fetch Chat Details
+      vm.chartURL = "";
+      axios({
+        method: "get",
+        url:
+          vm.$store.state.backend_server +
+          "/data-service/v0.1/chats/" +
+          vm.upload_chat_id +
+          "/details",
+        params: {
+          start_date: vm.start_date,
+          end_date: vm.end_date
+        },
+        headers: {
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          vm.chartURL = response.data["url"];
+        })
+        .catch(function(response) {
+          console.log(response.status);
+        });
+    },
+    generate_colors(number_of_colors) {
+      var background_color_array = Array(number_of_colors);
+      var border_color_array = Array(number_of_colors);
+      var n_array = [...background_color_array.keys()];
+      var index = 0;
+      while (index < n_array.length) {
+        //var color_index = Math.round(Math.random() * this.bar_colors.length);
+        var r = Math.round(Math.random() * 255);
+        var g = 190; //Math.round(Math.random() * 255);
+        var b = Math.round(Math.random() * 255);
+        var shade_amount = Math.random() * 20;
+        //var bar_color = tinycolor(this.bar_colors[color_index]).darken(shade_amount );
+        var bar_color = tinycolor({ r: r, g: g, b: b }).darken(shade_amount);
+        background_color_array[index] = "rgb(14, 14, 49)"; //bar_color.toRgbString();
+        border_color_array[index] = bar_color.toRgbString();
+
+        index++;
+      }
+      return [background_color_array, border_color_array];
     },
     createChart(chartId, chartData) {
-      const ctx = document.getElementById(chartId).getContext("2d");
-      new Chart(ctx, {
+      var canvas = document.getElementById(chartId);
+      var ctx = canvas.getContext("2d");
+      var v_member_phone = chartData.member_phone;
+      var chart_colors = this.generate_colors(v_member_phone.length);
+      if (typeof this.user_activity_chart !== "undefined") {
+        this.user_activity_chart.destroy();
+      }
+      this.user_activity_chart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange", "XVV"],
+          labels: v_member_phone,
           datasets: [
             {
-              label: "# of Votes",
-              data: chartData,
-              backgroundColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(255, 206, 86, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(255, 159, 64, 0.2)"
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 1)",
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 206, 86, 1)",
-                "rgba(75, 192, 192, 1)",
-                "rgba(153, 102, 255, 1)",
-                "rgba(255, 159, 64, 1)",
-                "rgba(255, 159, 64, 1)"
-              ],
+              label: "Number of Messages",
+              data: chartData.messages,
+              type: "bar",
+              xAxisID: "x_axes",
+              yAxisID: "y_message_count",
+              backgroundColor: chart_colors[0],
+              borderColor: chart_colors[1],
               borderWidth: 1
+            },
+            {
+              label: "% of Messages",
+              data: chartData.running_msg_count,
+              type: "line",
+              xAxisID: "x_axes",
+              yAxisID: "y_pareto",
+              pointBackgroundColor: "rgb(0,0,200)",
+              fill: false,
+              showLine: true
             }
           ]
         },
         options: {
+          maintainAspectRatio: false,
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: "Group Members Activity",
+            fontColor: "rgb(255,255,255)"
+          },
           scales: {
+            xAxes: [
+              {
+                id: "x_axes",
+                ticks: {
+                  fontColor: "rgb(255,255,255)"
+                }
+              }
+            ],
             yAxes: [
               {
+                id: "y_message_count",
+                type: "linear",
+                position: "left",
                 ticks: {
-                  beginAtZero: true
+                  fontColor: "rgb(255,255,255)"
+                }
+              },
+              {
+                id: "y_pareto",
+                type: "linear",
+                position: "right",
+                ticks: {
+                  fontColor: "rgb(255,255,255)",
+                  max: 100,
+                  min: 0
+                }
+              }
+            ]
+          }
+        }
+      });
+    },
+    monthlyActivityCharts(chartData) {
+      var total_chats_ctx = document
+        .getElementById("monthly_total")
+        .getContext("2d");
+      var unique_users_ctx = document
+        .getElementById("monthly_unique")
+        .getContext("2d");
+      if (typeof this.user_monthly_activity_chart !== "undefined") {
+        this.user_monthly_activity_chart.destroy();
+      }
+      if (typeof this.user_monthly_unique_chart !== "undefined") {
+        this.user_monthly_unique_chart.destroy();
+      }
+      this.user_monthly_activity_chart = new Chart(total_chats_ctx, {
+        type: "line",
+        data: {
+          labels: chartData.chat_mnth,
+          datasets: [
+            {
+              label: "Total Chats",
+              data: chartData.total_chats,
+              type: "line",
+              xAxesID: "x_axes",
+              yAxesID: "y_axes",
+              pointBackgroundColor: "rgb(0,0,200)",
+              borderColor: "rgb(14, 14, 49)",
+              lineTension: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          maintainAspectRatio: false,
+          legend: {
+            display: false
+          },
+          scales: {
+            xAxes: [
+              {
+                id: "x_axes",
+                ticks: {
+                  fontColor: "rgb(255,255,255)"
+                }
+              }
+            ],
+            yAxes: [
+              {
+                id: "y_axes",
+                ticks: {
+                  fontColor: "rgb(255,255,255)"
+                }
+              }
+            ]
+          },
+          title: {
+            display: true,
+            text: "Monthly Total Messages",
+            fontColor: "rgb(255,255,255)"
+          }
+        }
+      });
+
+      this.user_monthly_unique_chart = new Chart(unique_users_ctx, {
+        type: "line",
+        data: {
+          labels: chartData.chat_mnth,
+          datasets: [
+            {
+              label: "Unique Members",
+              data: chartData.member_count,
+              type: "line",
+              xAxesID: "x_axes",
+              yAxesID: "y_axes",
+              pointBackgroundColor: "rgb(0,0,200)",
+              borderColor: "rgb(14, 14, 49)",
+              lineTension: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          maintainAspectRatio: false,
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: "Monthly Unique Users",
+            fontColor: "rgb(255,255,255)"
+          },
+          scales: {
+            xAxes: [
+              {
+                id: "x_axes",
+                ticks: {
+                  fontColor: "rgb(255,255,255)"
+                }
+              }
+            ],
+            yAxes: [
+              {
+                id: "y_axes",
+                ticks: {
+                  fontColor: "rgb(255,255,255)"
                 }
               }
             ]
@@ -156,8 +568,15 @@ export default {
     this.checkToken();
   },
   mounted: function() {
-    this.fetchData();
-    this.createChart("myChart", this.cdata);
+    var upload_id = this.$route.params.upload_id;
+    if (upload_id == -1) {
+      this.setupDefaultUpload();
+    } else {
+      console.log(upload_id);
+      this.upload_chat_id = upload_id;
+    }
+    //this.fetchData();
+    //this.createChart("myChart", this.cdata);
   }
 };
 </script> 

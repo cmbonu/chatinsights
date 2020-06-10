@@ -3,13 +3,14 @@ import App from "./App.vue";
 //import router from "./router";
 import store from "./store";
 import VueRouter from 'vue-router'
-import SummaryBar from "./components/GroupSummary.vue";
+import GroupSummary from "./components/GroupSummary.vue";
 import UploadForm from "./components/UploadForm.vue";
 import LoginComponent from "./components/LoginComponent.vue";
 import './../node_modules/bulma/css/bulma.css';
 import './../node_modules/chart.js';
 import './../node_modules/@fortawesome/fontawesome-free/css/all.css';
 import './../node_modules/axios/dist/axios.min.js';
+import './../node_modules/tinycolor2/tinycolor.js'
 
 Vue.config.productionTip = false;
 Vue.use(VueRouter)
@@ -22,7 +23,7 @@ const routes = [
   {path : '/login/:access_token', component : LoginComponent},
   {path : '/login', component : LoginComponent},
   {path : '/upload', component : UploadForm},
-  {path : '/summary', component : SummaryBar},
+  {path : '/summary/:upload_id', component : GroupSummary},
 ]
 
 const router = new VueRouter({

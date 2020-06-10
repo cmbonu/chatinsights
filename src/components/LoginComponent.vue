@@ -44,32 +44,31 @@ export default {
   methods: {
     checkToken() {
       var localToken = this.$route.params.access_token;
-      console.log(localToken);
       if (localToken == null) {
         //localToken = this.$store.state.authToken;
         this.$router.push({ path: "/login/new" });
-      } else if ((localToken == "new")) {
-        console.log("New Login");
+      } else if (localToken == "new") {
+        //console.log("New Login");
       } else {
         //this.$router.push({ path: "/summary" });
         var vm = this;
         axios({
           method: "post",
-          url: "http://localhost:5000/auth/v0.1/check-token",
+          url: vm.$store.state.backend_server+"/auth/v0.1/check-token",
           headers: {
             "Content-Type": "application/json",
             Authorization: localToken
           }
         })
-          .then(function(response) {
+          .then(function() {
             //handle success
-            console.log(response);
+            //console.log(response.status);
             vm.$store.commit("setToken", { token: localToken });
-            vm.$router.push({ path: "/summary" });
+            vm.$router.push({ path: "/summary/-1" });
           })
-          .catch(function(response) {
+          .catch(function() {
             //handle error
-            console.log(response);
+            //console.log(response.status);
             vm.$router.push({ path: "/login/new" });
           });
       }
@@ -82,20 +81,20 @@ export default {
       var json_payload = { email_address: this.email_address };
       axios({
         method: "post",
-        url: "http://localhost:5000/auth/v0.1/email-token",
+        url: vm.$store.state.backend_server+"/auth/v0.1/email-token",
         data: json_payload,
         headers: { "Content-Type": "application/json" }
       })
-        .then(function(response) {
+        .then(function() {
           //handle success
           vm.email_address = "";
           document.getElementById("success_notif").style.display = "block";
-          console.log(response);
+          //console.log(response.status);
         })
-        .catch(function(response) {
+        .catch(function() {
           //handle error
           document.getElementById("fail_notif").style.display = "block";
-          console.log(response);
+          //console.log(response.status);
         });
     }
   },

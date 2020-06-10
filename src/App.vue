@@ -1,6 +1,6 @@
 <template>
   <section id="app" class="section" >
-    <div class="container is-fluid">
+    <div class="is-fluid">
       <router-view></router-view>
     </div>
   </section>

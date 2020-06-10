@@ -1,5 +1,10 @@
 <template>
-  <nav class="navbar is-transparent" role="navigation" aria-label="main navigation" style="margin-bottom: 5px">
+  <nav
+    class="navbar is-transparent"
+    role="navigation"
+    aria-label="main navigation"
+    style="margin-bottom: 5px"
+  >
     <div class="navbar-brand">
       <a class="navbar-item" href="/">
         <!--img src="https://bulma.io/images/bulma-logo.png" width="112" height="28"-->
@@ -23,23 +28,23 @@
     <div id="navbarBasicExample" class="navbar-menu">
       <div class="navbar-start">
         <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">Dashboards</a>
+          <a class="navbar-link">Uploads</a>
 
           <div class="navbar-dropdown">
-            <router-link to="/summary" class="navbar-item">New Dashboard</router-link>
-            <a class="navbar-item">Dashboard 2</a>
-            <a class="navbar-item">Dashboard 3</a>
+            <router-link
+              v-for="upload in uploads"
+              :key="upload.upload_id"
+              :to="upload.router_link "
+              class="navbar-item"
+            >{{ upload.upload_title }}</router-link>
             <hr class="navbar-divider" />
-            <a class="navbar-item">Report an issue</a>
-            <hr class="navbar-divider" />
-            <!--<a class="navbar-item">New Upload</a>-->
             <router-link to="/upload" class="navbar-item">New Upload</router-link>
           </div>
         </div>
 
         <!--<a class="navbar-item">Upload Chat</a>-->
-        <router-link to="/upload" class="navbar-item">Upload Chat</router-link>
-
+        <!--router-link to="/upload" class="navbar-item">Upload Chat</router-link-->
+        <!--
         <div class="navbar-item has-dropdown is-hoverable">
           <a class="navbar-link">More</a>
 
@@ -51,8 +56,9 @@
             <a class="navbar-item">Report an issue</a>
           </div>
         </div>
+        -->
       </div>
-
+      <!--
       <div class="navbar-end">
         <div class="navbar-item">
           <div class="buttons">
@@ -63,14 +69,19 @@
           </div>
         </div>
       </div>
+      -->
     </div>
   </nav>
 </template>
 
 
 <script>
+import axios from "axios";
 export default {
   name: "TopNav",
+  data: function() {
+    return { uploads: [] };
+  },
   // define methods under the `methods` object
   methods: {
     resptoggle: function(event) {
@@ -86,7 +97,28 @@ export default {
           .classList.toggle("is-active");
         //alert(event.target.tagName)
       }
+    },
+    getUploads: function() {
+      var localToken = this.$store.state.authToken;
+      var vm = this;
+      axios({
+        method: "get",
+        url:
+          vm.$store.state.backend_server + "/data-service/v0.1/chats/uploads",
+        headers: {
+          Authorization: localToken
+        }
+      })
+        .then(function(response) {
+          vm.uploads = response.data;
+        })
+        .catch(function(response) {
+          console.log(response.status);
+        });
     }
+  },
+  mounted: function() {
+    this.getUploads();
   }
 };
 </script>
@@ -95,10 +127,11 @@ export default {
   background-color: #303053;
   color: white;
 }
-.navbar-link, .navbar-item{
-  color: white
+.navbar-link,
+.navbar-item {
+  color: white;
 }
-.navbar-dropdown{
+.navbar-dropdown {
   background: #303053;
 }
 </style>
