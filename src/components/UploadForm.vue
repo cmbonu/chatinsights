@@ -87,14 +87,11 @@ export default {
   methods: {
     updatename: function(event) {
       if (event.target.files.length > 0) {
-        //const fileName = document.querySelector(".file-name");
-        //fileName.textContent = event.target.files[0].name;
         this.file_name = event.target.files[0].name;
         this.upload_chat_file = event.target.files;
       }
     },
     processForm: function() {
-      //console.log({ name: this.file_title, email: this.email_address });
       this.state.isSending = true;
       document.getElementById("success_notif").style.display = "none";
       document.getElementById("fail_notif").style.display = "none";

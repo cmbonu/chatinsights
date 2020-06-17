@@ -5,6 +5,8 @@
       <!--img src="https://bulma.io/images/bulma-logo.png" width="112" height="28"-->
       <p class="title has-text-left has-text-white">Chat Insights</p>
     </a>
+    <br/>
+    <br/>
     <div class="tile is-ancestor" style="height:60vh">
       <div class="tile is-4 is-vertical" style="margin:auto">
         <div class="field">
@@ -53,12 +55,10 @@ export default {
     checkToken() {
       var localToken = this.$route.params.access_token;
       if (localToken == null) {
-        //localToken = this.$store.state.authToken;
         this.$router.push({ path: "/login/new" });
       } else if (localToken == "new") {
-        //console.log("New Login");
+        //console.log()
       } else {
-        //this.$router.push({ path: "/summary" });
         var vm = this;
         axios({
           method: "post",
@@ -70,21 +70,16 @@ export default {
         })
           .then(function() {
             //handle success
-            //console.log(response.status);
             vm.$store.commit("setToken", { token: localToken });
             vm.$router.push({ path: "/summary/-1" });
           })
           .catch(function() {
             //handle error
-            //console.log(response.status);
             vm.$router.push({ path: "/login/new" });
           });
       }
     },
     doLogin() {
-      //console.log(x);
-      //this.$store.commit("setToken", { token: "neuroticmofo" });
-      //this.$router.push({ path: "/summary" });
       this.state.isSending = true;
       document.getElementById("success_notif").style.display = "none";
       document.getElementById("fail_notif").style.display = "none";
@@ -101,13 +96,11 @@ export default {
           vm.state.isSending = false;
           vm.email_address = "";
           document.getElementById("success_notif").style.display = "block";
-          //console.log(response.status);
         })
         .catch(function() {
           //handle error
           vm.state.isSending = false;
           document.getElementById("fail_notif").style.display = "block";
-          //console.log(response.status);
         });
     }
   },

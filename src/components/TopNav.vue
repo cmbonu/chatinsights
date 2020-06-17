@@ -19,9 +19,9 @@
         data-target="navbarBasicExample"
         v-on:click="resptoggle"
       >
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
+        <span aria-hidden="true" style="color: white;"></span>
+        <span aria-hidden="true" style="color: white;"></span>
+        <span aria-hidden="true" style="color: white;"></span>
       </a>
     </div>
 
@@ -61,6 +61,7 @@ export default {
       if (e.target.parentElement.classList.contains("navbar-dropdown")) {
         e.target.parentElement.style.display = "none";
       }
+      this.resptoggle(e);
       this.$router.push({ path: router_link });
       setTimeout(() => {
         e.target.parentElement.style.display = "";
@@ -78,7 +79,6 @@ export default {
         document
           .getElementsByClassName("navbar-menu")[0]
           .classList.toggle("is-active");
-        //alert(event.target.tagName)
       }
     },
     getUploads: function() {
@@ -106,6 +106,9 @@ export default {
 };
 </script>
 <style scoped>
+.navbar-menu{
+  background-color: #303053;
+}
 .navbar {
   background-color: #303053;
   color: white;

@@ -153,7 +153,8 @@ export default {
       end_date: "",
       user_activity_chart: undefined,
       user_monthly_activity_chart: undefined,
-      user_monthly_unique_chart: undefined
+      user_monthly_unique_chart: undefined,
+      timeline_token_source : axios.CancelToken.source()
     };
   },
 
@@ -167,7 +168,6 @@ export default {
     },
     upload_chat_id: function(new_upload_id) {
       this.fetchDefaultDataForUploadID(new_upload_id);
-      //this.fetchData();
     },
     $route(to, from) {
       // react to route changes...
@@ -333,6 +333,8 @@ export default {
       //Fetch Chat Details
       //vm.chartURL = "";
       document.getElementById("igraph").contentWindow.location.replace("about:blank");
+      vm.timeline_token_source.cancel("Timeline Request Cancelled");
+      vm.timeline_token_source = axios.CancelToken.source()
       axios({
         method: "get",
         url:
@@ -346,7 +348,8 @@ export default {
         },
         headers: {
           Authorization: localToken
-        }
+        },
+        cancelToken : vm.timeline_token_source.token
       })
         .then(function(response) {
           //vm.chartURL = response.data["url"];
