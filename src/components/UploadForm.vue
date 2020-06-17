@@ -1,30 +1,11 @@
 <template>
   <div>
     <top-nav />
-    <NotificationBanner/>
+    <NotificationBanner />
     <div class="columns is-centered" style="padding-top:30px;">
       <div class="column is-4" style="text-align: left;">
         <div class="tile is-vertical">
           <p class="title has-text-white">Upload File</p>
-          <div class="field">
-            <label class="label has-text-white">Email</label>
-            <div class="control has-icons-left has-icons-right">
-              <input
-                class="input is-danger"
-                type="email"
-                name="email_address"
-                placeholder="Email Address"
-                v-model="email_address"
-              />
-              <span class="icon is-small is-left">
-                <i class="fas fa-envelope"></i>
-              </span>
-              <span class="icon is-small is-right">
-                <i class="fas fa-exclamation-triangle"></i>
-              </span>
-            </div>
-            <p class="help is-success">Email addresss for the dashboard link</p>
-          </div>
 
           <div class="columns">
             <div class="column is-5">
@@ -66,7 +47,15 @@
           </div>
           <div class="field is-grouped">
             <div class="control">
-              <button v-on:click="processForm" class="button is-link">Submit</button>
+              <button v-on:click="processForm" class="button is-link" :disabled="state.isSending">
+                <span class="icon" v-if="state.isSending">
+                  <i class="fas fa-spinner"></i>
+                </span>
+                <span v-else>
+                  Submit
+                </span>
+                
+              </button>
             </div>
           </div>
         </div>
@@ -78,7 +67,7 @@
 <script>
 import axios from "axios";
 import TopNav from "./TopNav.vue";
-import NotificationBanner from './Notification';
+import NotificationBanner from "./Notification";
 export default {
   name: "UploadForm",
   components: {
@@ -89,8 +78,10 @@ export default {
     return {
       upload_chat_file: [],
       file_title: "",
-      email_address: "",
-      file_name: "File Name"
+      file_name: "File Name",
+      state: {
+        isSending: false
+      }
     };
   },
   methods: {
@@ -104,6 +95,9 @@ export default {
     },
     processForm: function() {
       //console.log({ name: this.file_title, email: this.email_address });
+      this.state.isSending = true;
+      document.getElementById("success_notif").style.display = "none";
+      document.getElementById("fail_notif").style.display = "none";
       var formData = new FormData();
       formData.append("file_title", this.file_title);
       formData.append("email_address", this.email_address);
@@ -111,12 +105,16 @@ export default {
       var vm = this;
       axios({
         method: "post",
-        url: "http://localhost:5000/file-submission/submit-form",
+        url: vm.$store.state.backend_server + "/file-submission/submit-form",
         data: formData,
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: vm.$store.state.authToken
+        }
       })
         .then(function(response) {
           //handle success
+          vm.state.isSending = false;
           document.getElementById("success_notif").style.display = "block";
           console.log(response);
           vm.file_title = "";
@@ -126,6 +124,7 @@ export default {
         })
         .catch(function(response) {
           //handle error
+          vm.state.isSending = false;
           document.getElementById("fail_notif").style.display = "block";
           console.log(response);
         });

@@ -113,7 +113,6 @@
             id="igraph"
             scrolling="yes"
             seamless="seamless"
-            :src="chartURL"
             height="550"
             width="100%"
           ></iframe>
@@ -139,15 +138,15 @@ export default {
       cdata: [],
       monthly_total_data: {},
       ctx: 0,
-      total_chats: 0,
-      has_media: 0,
-      has_link: 0,
-      unique_contributors: 0,
-      exits: 0,
-      security_code: 0,
-      icon_change: 0,
-      new_members: 0,
-      average_mau: 0,
+      total_chats: '',
+      has_media: '',
+      has_link: '',
+      unique_contributors: '',
+      exits: '',
+      security_code: '',
+      icon_change: '',
+      new_members: '',
+      average_mau: '',
       chartURL: "",
       upload_chat_id: -1,
       start_date: "",
@@ -160,10 +159,11 @@ export default {
 
   watch: {
     cdata: function(new_data) {
-      this.createChart("myChart", new_data);
+      if (new_data != null){ this.createChart("myChart", new_data);}
+     
     },
     monthly_total_data: function(new_data) {
-      this.monthlyActivityCharts(new_data);
+      if (new_data != null){this.monthlyActivityCharts(new_data);}
     },
     upload_chat_id: function(new_upload_id) {
       this.fetchDefaultDataForUploadID(new_upload_id);
@@ -331,7 +331,8 @@ export default {
         });
 
       //Fetch Chat Details
-      vm.chartURL = "";
+      //vm.chartURL = "";
+      document.getElementById("igraph").contentWindow.location.replace("about:blank");
       axios({
         method: "get",
         url:
@@ -348,7 +349,8 @@ export default {
         }
       })
         .then(function(response) {
-          vm.chartURL = response.data["url"];
+          //vm.chartURL = response.data["url"];
+          document.getElementById("igraph").contentDocument.write(response.data["url"]);
         })
         .catch(function(response) {
           console.log(response.status);

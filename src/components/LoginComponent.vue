@@ -20,7 +20,12 @@
 
         <div class="field">
           <p class="control">
-            <button v-on:click="doLogin" class="button is-link">Email me a Link</button>
+            <button v-on:click="doLogin" class="button is-link">
+              <span class="icon" v-if="state.isSending">
+                <i class="fas fa-spinner"></i>
+              </span>
+              <span v-else>Email me a Link</span>
+            </button>
           </p>
         </div>
       </div>
@@ -38,7 +43,10 @@ export default {
   },
   data: function() {
     return {
-      email_address: ""
+      email_address: "",
+      state: {
+        isSending: false
+      }
     };
   },
   methods: {
@@ -54,7 +62,7 @@ export default {
         var vm = this;
         axios({
           method: "post",
-          url: vm.$store.state.backend_server+"/auth/v0.1/check-token",
+          url: vm.$store.state.backend_server + "/auth/v0.1/check-token",
           headers: {
             "Content-Type": "application/json",
             Authorization: localToken
@@ -77,22 +85,27 @@ export default {
       //console.log(x);
       //this.$store.commit("setToken", { token: "neuroticmofo" });
       //this.$router.push({ path: "/summary" });
+      this.state.isSending = true;
+      document.getElementById("success_notif").style.display = "none";
+      document.getElementById("fail_notif").style.display = "none";
       var vm = this;
       var json_payload = { email_address: this.email_address };
       axios({
         method: "post",
-        url: vm.$store.state.backend_server+"/auth/v0.1/email-token",
+        url: vm.$store.state.backend_server + "/auth/v0.1/email-token",
         data: json_payload,
         headers: { "Content-Type": "application/json" }
       })
         .then(function() {
           //handle success
+          vm.state.isSending = false;
           vm.email_address = "";
           document.getElementById("success_notif").style.display = "block";
           //console.log(response.status);
         })
         .catch(function() {
           //handle error
+          vm.state.isSending = false;
           document.getElementById("fail_notif").style.display = "block";
           //console.log(response.status);
         });

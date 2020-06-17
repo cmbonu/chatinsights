@@ -7,6 +7,7 @@ export default new Vuex.Store({
   state: {
     authToken:'',
     backend_server: 'http://localhost:5000'
+    //backend_server: 'http://35.210.190.118:5000'
   },
   mutations: {
     setToken(state, payload){

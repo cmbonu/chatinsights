@@ -2,7 +2,7 @@
   <div>
     <div id="success_notif" class="notification is-primary is-light" hidden>
       <button class="delete" v-on:click="exitSuccessNotification"></button>
-      Request Sucessfully Submitted
+      Request Successfully Submitted
     </div>
     <div id="fail_notif" class="notification is-danger is-light" hidden>
       <button class="delete" v-on:click="exitFailNotification"></button>

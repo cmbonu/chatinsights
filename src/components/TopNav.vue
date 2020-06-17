@@ -31,45 +31,18 @@
           <a class="navbar-link">Uploads</a>
 
           <div class="navbar-dropdown">
-            <router-link
+            <a
               v-for="upload in uploads"
               :key="upload.upload_id"
               :to="upload.router_link "
               class="navbar-item"
-            >{{ upload.upload_title }}</router-link>
+              v-on:click="navigateAndCloseMenu($event,upload.router_link)"
+            >{{ upload.upload_title }}</a>
             <hr class="navbar-divider" />
             <router-link to="/upload" class="navbar-item">New Upload</router-link>
           </div>
         </div>
-
-        <!--<a class="navbar-item">Upload Chat</a>-->
-        <!--router-link to="/upload" class="navbar-item">Upload Chat</router-link-->
-        <!--
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">More</a>
-
-          <div class="navbar-dropdown">
-            <a class="navbar-item">About</a>
-            <a class="navbar-item">Jobs</a>
-            <a class="navbar-item">Contact</a>
-            <hr class="navbar-divider" />
-            <a class="navbar-item">Report an issue</a>
-          </div>
-        </div>
-        -->
       </div>
-      <!--
-      <div class="navbar-end">
-        <div class="navbar-item">
-          <div class="buttons">
-            <a class="button is-primary">
-              <strong>Sign up</strong>
-            </a>
-            <a class="button is-light">Log in</a>
-          </div>
-        </div>
-      </div>
-      -->
     </div>
   </nav>
 </template>
@@ -84,6 +57,16 @@ export default {
   },
   // define methods under the `methods` object
   methods: {
+    navigateAndCloseMenu(e, router_link) {
+      if (e.target.parentElement.classList.contains("navbar-dropdown")) {
+        e.target.parentElement.style.display = "none";
+      }
+      this.$router.push({ path: router_link });
+      setTimeout(() => {
+        e.target.parentElement.style.display = "";
+        e.target.blur();
+      }, 100);
+    },
     resptoggle: function(event) {
       // `this` inside methods points to the Vue instance
       // `event` is the native DOM event
