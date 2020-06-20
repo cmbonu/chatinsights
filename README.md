@@ -8,7 +8,7 @@ http://35.210.190.118/
 ### How To
     1. Enter email address and click on "Email me a link"
     2. A link to your dashboard will sent to your mailbox
-    3. Click on the received link to view your dashboard
+    3. Click on the received link to view your dashboard. Dashboard links are valid for 1 week.
         * Dashboards will be empty for first time users.
         * Check your junk folder if you do not receive the email.
     4. To upload a chat for analysis
@@ -21,8 +21,7 @@ http://35.210.190.118/
         * You will be notified by email when the analysis is ready (usually less than 2 mins)
     5. Click on the dashboard link received in step 2 or generate a new one.
     6. Your Analysis will load by default.
-    7. You can upload as many files as you want. They will be available as links in the "Uploads" menu.
-    8. Dashboard links are valid for 1 week.
+    7. Uploads are listed in the "Uploads" menu
 
 ## Project setup
 ```
