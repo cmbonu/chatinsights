@@ -80,26 +80,54 @@
         <p class="title">{{security_code}}</p>
       </div>
     </div>
+
+    <div class="tile">
+      <div class="has-text-centered tile is-child box" style=" height:100vh; padding:10px;">
+        <div style="height:45vh;">
+        <canvas id="myChart"></canvas>
+        </div>
+        <hr/>
+        <div style="height:45vh;">
+          <p class="heading">WORDCLOUD</p>
+          <div id="enclosing_div" style="height:40vh;">
+          <canvas id="wordcloud_div"></canvas>
+          </div>
+        </div>
+      </div>
+      
+
+      <div class="has-text-centered tile is-child box" style=" height:100vh; padding:10px;">
+        <div style="height:45vh;">
+        <canvas id="monthly_unique"></canvas>
+        </div>
+        <hr/>
+        <div style="height:45vh;">
+        <canvas id="monthly_total"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!--
     <div class="tile">
       <div class="has-text-centered tile is-child box" style=" height:50vh; padding:10px;">
         <canvas id="myChart"></canvas>
-        <!--width="100" style="min-height:25px"-->
       </div>
       <div class="has-text-centered tile is-child box" style=" height:50vh; padding:10px;">
-        <div style="height:23vh;">
-          <canvas id="monthly_total"></canvas>
-        </div>
-        <div style=" height:23vh;">
-          <canvas id="monthly_unique"></canvas>
-        </div>
+        <canvas id="monthly_total"></canvas>
       </div>
     </div>
-    <div class="tile is-hidden">
-      <div class="has-text-centered tile is-child box">
-        <p class="heading">TIMELINE</p>
-        <div id="chat_timeline"></div>
+    <div class="tile">
+      <div class="has-text-centered tile is-child box" style=" height:50vh; padding:10px;">
+        <div id="enclosing_div" style="height:45vh;">
+          <p class="heading">WORDCLOUD</p>
+          <canvas id="wordcloud_div"></canvas>
+        </div>
+      </div>
+      <div class="has-text-centered tile is-child box" style=" height:50vh; padding:10px;">
+        <canvas id="monthly_unique"></canvas>
       </div>
     </div>
+    -->
     <div class="tile is-hidden-mobile">
       <div class="tile is-child box">
         <p style="color: white" class="has-text-centered heading">Conversations Timeline</p>
@@ -109,13 +137,7 @@
             view
             on a fullsize screen
           </p>
-          <iframe
-            id="igraph"
-            scrolling="yes"
-            seamless="seamless"
-            height="550"
-            width="100%"
-          ></iframe>
+          <iframe id="igraph" scrolling="yes" seamless="seamless" height="550" width="100%"></iframe>
         </div>
       </div>
     </div>
@@ -128,6 +150,7 @@ import Chart from "chart.js";
 import TopNav from "./TopNav.vue";
 import axios from "axios";
 import tinycolor from "tinycolor2";
+import WordCloud from "wordcloud";
 export default {
   name: "GroupSummary",
   components: {
@@ -138,15 +161,15 @@ export default {
       cdata: [],
       monthly_total_data: {},
       ctx: 0,
-      total_chats: '',
-      has_media: '',
-      has_link: '',
-      unique_contributors: '',
-      exits: '',
-      security_code: '',
-      icon_change: '',
-      new_members: '',
-      average_mau: '',
+      total_chats: "",
+      has_media: "",
+      has_link: "",
+      unique_contributors: "",
+      exits: "",
+      security_code: "",
+      icon_change: "",
+      new_members: "",
+      average_mau: "",
       chartURL: "",
       upload_chat_id: -1,
       start_date: "",
@@ -154,25 +177,28 @@ export default {
       user_activity_chart: undefined,
       user_monthly_activity_chart: undefined,
       user_monthly_unique_chart: undefined,
-      timeline_token_source : axios.CancelToken.source()
+      timeline_token_source: axios.CancelToken.source()
     };
   },
 
   watch: {
     cdata: function(new_data) {
-      if (new_data != null){ this.createChart("myChart", new_data);}
-     
+      if (new_data != null) {
+        this.createChart("myChart", new_data);
+      }
     },
     monthly_total_data: function(new_data) {
-      if (new_data != null){this.monthlyActivityCharts(new_data);}
+      if (new_data != null) {
+        this.monthlyActivityCharts(new_data);
+      }
     },
     upload_chat_id: function(new_upload_id) {
       this.fetchDefaultDataForUploadID(new_upload_id);
     },
-    $route(to, from) {
+    $route(to) {
       // react to route changes...
       this.upload_chat_id = to.params.upload_id;
-      console.log(from.params.upload_id);
+      //console.log(from.params.upload_id);
     }
   },
 
@@ -332,9 +358,13 @@ export default {
 
       //Fetch Chat Details
       //vm.chartURL = "";
-      document.getElementById("igraph").contentWindow.location.replace("about:blank");
+      document
+        .getElementById("igraph")
+        .contentWindow.location.replace("about:blank");
+      const context = document.getElementById("wordcloud_div").getContext('2d');
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
       vm.timeline_token_source.cancel("Timeline Request Cancelled");
-      vm.timeline_token_source = axios.CancelToken.source()
+      vm.timeline_token_source = axios.CancelToken.source();
       axios({
         method: "get",
         url:
@@ -349,11 +379,14 @@ export default {
         headers: {
           Authorization: localToken
         },
-        cancelToken : vm.timeline_token_source.token
+        cancelToken: vm.timeline_token_source.token
       })
         .then(function(response) {
           //vm.chartURL = response.data["url"];
-          document.getElementById("igraph").contentDocument.write(response.data["url"]);
+          document
+            .getElementById("igraph")
+            .contentDocument.write(response.data["url"]);
+          vm.createWordCloud(response.data["wordcount"]);
         })
         .catch(function(response) {
           console.log(response.status);
@@ -378,6 +411,27 @@ export default {
         index++;
       }
       return [background_color_array, border_color_array];
+    },
+    createWordCloud(wordlist) {
+      const wordcloudCanvas = document.getElementById("wordcloud_div");
+      //var wordcloudCanvas  = document.createElement("CANVAS");
+      //wordcloudDiv.appendChild(wordcloudCanvas);
+      //const context = wordcloudCanvas.getContext('2d');
+      //context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+      const div = document.getElementById("enclosing_div");
+      wordcloudCanvas.height = div.offsetHeight;
+      wordcloudCanvas.width = div.offsetWidth;
+
+      var wordcloud_options = {
+        list: wordlist,
+        backgroundColor: "#303053",
+        //clearCanvas: true,
+        color: "random-light",
+        shape: "square",
+        shrinkToFit: true,
+        drawOutOfBound: false
+      };
+      WordCloud(wordcloudCanvas, wordcloud_options);
     },
     createChart(chartId, chartData) {
       var canvas = document.getElementById(chartId);
@@ -598,5 +652,8 @@ export default {
 .is-child {
   background: #303053;
   color: white;
+}
+hr{
+  border: 1px solid rgb(14, 14, 49);
 }
 </style>
