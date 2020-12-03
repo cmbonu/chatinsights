@@ -1,5 +1,5 @@
 <template>
-  <section id="app" class="section" >
+  <section id="app" class="section">
     <div class="is-fluid">
       <router-view></router-view>
     </div>
